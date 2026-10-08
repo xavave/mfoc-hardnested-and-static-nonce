@@ -665,7 +665,7 @@ check_keys:
 							// We don't known this key, try to break it
 							// This key can be found here two or more times
 							if (ck[i].count > 0) {
-								fprintf(stdout, "%d %llx\n", ck[i].count, ck[i].key);
+								// fprintf(stdout, "%d %llx\n", ck[i].count, ck[i].key);
 								// Set required authetication method
 								num_to_bytes(ck[i].key, 6, mp.mpa.abtKey);
 								mc = dumpKeysA ? MC_AUTH_A : MC_AUTH_B;
@@ -1188,8 +1188,8 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 		Auth[1] = sector_to_block(e_sector); //block
 	}
 	iso14443a_crc_append(Auth, 2);
-	fprintf(stdout, "\nMode: %c, Auth command:\t", mode);
-	print_hex(Auth, 4);
+	// fprintf(stdout, "\nMode: %c, Auth command:\t", mode);
+	// print_hex(Auth, 4);
 
 	// We need full control over the CRC
 	if (nfc_device_set_property_bool(r.pdi, NP_HANDLE_CRC, false) < 0) {
@@ -1213,7 +1213,7 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 		nfc_perror(r.pdi, "nfc_device_set_property_bool");
 		exit(EXIT_FAILURE);
 	}
-	print_hex(Rx, res);
+	// print_hex(Rx, res);
 
 	// Save the tag nonce (Nt)
 	Nt = bytes_to_num(Rx, res);
@@ -1253,16 +1253,16 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 	}
 
 	// Transmit reader-answer
-	fprintf(stdout, "\t{Ar}:\t");
-	print_hex_par(ArEnc, 64, ArEncPar);
+	// fprintf(stdout, "\t{Ar}:\t");
+	// print_hex_par(ArEnc, 64, ArEncPar);
 	if (((res = nfc_initiator_transceive_bits(r.pdi, ArEnc, 64, ArEncPar, Rx, sizeof(Rx), RxPar)) < 0) || (res != 32)) {
 		ERR("Reader-answer transfer error, exiting..");
 		exit(EXIT_FAILURE);
 	}
 
 	// Now print the answer from the tag
-	fprintf(stdout, "\t{At}:\t");
-	print_hex_par(Rx, res, RxPar);
+	// fprintf(stdout, "\t{At}:\t");
+	// print_hex_par(Rx, res, RxPar);
 
 	// Decrypt the tag answer and verify that suc3(Nt) is At
 	Nt = prng_successor(Nt, 32);
@@ -1270,12 +1270,12 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 		ERR("[At] is not Suc3(Nt), something is wrong, exiting..");
 		exit(EXIT_FAILURE);
 	}
-	fprintf(stdout, "Authentication completed.\n\n");
+	// fprintf(stdout, "Authentication completed.\n\n");
 
 	// If we are in "Get Distances" mode
 	if (mode == 'd') {
 		for (m = 0; m < d->num_distances; m++) {
-			fprintf(stdout, "Nested Auth number: %x\n", m);
+			// fprintf(stdout, "Nested Auth number: %x\n", m);
 			// Encrypt Auth command with the current keystream
 			for (i = 0; i < 4; i++) {
 				AuthEnc[i] = crypto1_byte(pcs, 0x00, 0) ^ Auth[i];
@@ -1283,8 +1283,8 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 				AuthEncPar[i] = filter(pcs->odd) ^ oddparity(Auth[i]);
 			}
 
-			fprintf(stdout, "\t{AuthEnc}:\t");
-			print_hex_par(AuthEnc, 64, AuthEncPar);
+			// fprintf(stdout, "\t{AuthEnc}:\t");
+			// print_hex_par(AuthEnc, 64, AuthEncPar);
 
 			// Sending the encrypted Auth command
 			if ((res = nfc_initiator_transceive_bits(r.pdi, AuthEnc, 32, AuthEncPar, Rx, sizeof(Rx), RxPar)) < 0) {
@@ -1292,8 +1292,8 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 				exit(EXIT_FAILURE);
 			}
 
-			fprintf(stdout, "\t{AuthEnResp}:\t");
-			print_hex_par(Rx, res, RxPar);
+			// fprintf(stdout, "\t{AuthEnResp}:\t");
+			// print_hex_par(Rx, res, RxPar);
 
 			// Decrypt the encrypted auth
 			if (t.sectors[e_sector].foundKeyA) {
@@ -1326,8 +1326,8 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 			nfc_device_set_property_bool(r.pdi, NP_HANDLE_PARITY, false);
 
 			// Transmit reader-answer
-			fprintf(stdout, "\t{Ar}:\t");
-			print_hex_par(ArEnc, 64, ArEncPar);
+			// fprintf(stdout, "\t{Ar}:\t");
+			// print_hex_par(ArEnc, 64, ArEncPar);
 
 			if (((res = nfc_initiator_transceive_bits(r.pdi, ArEnc, 64, ArEncPar, Rx, sizeof(Rx), RxPar)) < 0) || (res != 32)) {
 				ERR("Reader-answer transfer error, exiting..");
@@ -1340,13 +1340,13 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 			}
 
 			// Now print the answer from the tag
-			fprintf(stdout, "\t{At}:\t");
-			print_hex_par(Rx, res, RxPar);
+			// fprintf(stdout, "\t{At}:\t");
+			// print_hex_par(Rx, res, RxPar);
 		} // Next auth probe
 
 		// Find median from all distances
 		d->median = median(*d);
-		fprintf(stdout, "Median: %05d\n", d->median);
+		// fprintf(stdout, "Median: %05d\n", d->median);
 	} // The end of Get Distances mode
 
 	// If we are in "Get Recovery" mode
@@ -1387,7 +1387,7 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 		}
 
 		// Iterate over Nt-x, Nt+x
-		fprintf(stdout, "Iterate from %d to %d\n", d->median - d->tolerance, d->median + d->tolerance);
+		// fprintf(stdout, "Iterate from %d to %d\n", d->median - d->tolerance, d->median + d->tolerance);
 		NtProbe = prng_successor(Nt, d->median - d->tolerance);
 		for (m = d->median - d->tolerance; m <= d->median + d->tolerance; m += 2) {
 
@@ -1408,7 +1408,7 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 					// Allocate a new space for keys
 					if (((kcount % MEM_CHUNK) == 0) || (kcount >= pk->size)) {
 						pk->size += MEM_CHUNK;
-						fprintf(stdout, "New chunk by %d, sizeof %lu\n", kcount, pk->size * sizeof(uint64_t));
+						// fprintf(stdout, "New chunk by %d, sizeof %lu\n", kcount, pk->size * sizeof(uint64_t));
 						pk->possibleKeys = (uint64_t*)realloc((void*)pk->possibleKeys, pk->size * sizeof(uint64_t));
 						if (pk->possibleKeys == NULL) {
 							ERR("Memory allocation error for pk->possibleKeys");
@@ -1436,7 +1436,7 @@ int mf_enhanced_auth(int e_sector, int a_sector, mftag t, mfreader r, denonce* d
 	if (mode == 'h') {
 		// Again, prepare the Auth command with MC_AUTH_A, recover the block and CRC
 		Auth[0] = dumpKeysA ? MC_AUTH_A : MC_AUTH_B;
-		Auth[1] = a_sector * 4; //block
+		Auth[1] = sector_to_block(a_sector); //block
 		iso14443a_crc_append(Auth, 2);
 
 		// Encryption of the Auth command, sending the Auth command
