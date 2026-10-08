@@ -34,6 +34,7 @@
 // Handle platform specific includes
 #include <stdlib.h>
 #include <windows.h>
+#include <string.h>
 
 //There is no setenv()and unsetenv() in windows,but we can use putenv() instead.
 int setenv(const char *name, const char *value, int overwrite)

@@ -3,7 +3,20 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand> $(SolutionDir)dist\$(ProjectName)\$(ProjectName).exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>
-    </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-P 20 -T 20 -I 0 -f "G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\keys\std.keys" -O"G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\dumps\Dump_01234567.mfd"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArgumentsHistory>-P 20 -T 20 -I 0 -f "G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\keys\std.keys" -O"G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\dumps\Dump_01234567.mfd"|</LocalDebuggerCommandArgumentsHistory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommand>
+    </LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-P 20 -T 20 -I 0 -f "G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\keys\std.keys" -O"G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\dumps\Dump_01234567.mfd"</LocalDebuggerCommandArguments>
+    <LocalDebuggerAttach>false</LocalDebuggerAttach>
+    <LocalDebuggerAmpDefaultAccelerator>{ADEFF70D-84BF-47A1-91C3-FF6B0FC71218}</LocalDebuggerAmpDefaultAccelerator>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArgumentsHistory>-P 20 -T 20 -I 0 -f "G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\keys\std.keys" -O"G:\work\Mifare-Windows-Tool\MifareWindowsTool\bin\Debug\dumps\Dump_01234567.mfd"|</LocalDebuggerCommandArgumentsHistory>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
 </Project>

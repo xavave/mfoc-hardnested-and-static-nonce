@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <locale.h>
 #include <math.h>
-#include <nfc/nfc.h>
+#include <nfc\nfc.h>
 #ifdef _MSC_VER
 #include <direct.h>
 #include "windows.h"

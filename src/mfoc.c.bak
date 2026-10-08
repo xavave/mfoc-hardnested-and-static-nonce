@@ -114,7 +114,6 @@ int main(int argc, char* const argv[])
 	bool failure = false;
 	bool skip = false;
 	bool force_hardnested = false;
-	bool static_nonce_test = false;
 	// Next default key specified as option (-k)
 	uint8_t* defKeys = NULL, * p;
 	size_t defKeys_len = 0;
@@ -165,14 +164,10 @@ int main(int argc, char* const argv[])
 	struct slre_cap caps[2];
 
 	// Parse command line arguments
-	while ((ch = getopt(argc, argv, "hCZFP:T:O:k:f:I:S")) != -1) {
+	while ((ch = getopt(argc, argv, "hCZFP:T:O:k:f:I:")) != -1) {
 		switch (ch) {
 		case 'C':
 			use_default_key = false;
-			break;
-		case 'S':
-			// Mode diagnostic nonce statique
-			static_nonce_test = true;
 			break;
 		case 'P':
 			// Number of probes
@@ -292,14 +287,6 @@ int main(int argc, char* const argv[])
 	}
 
 	t.authuid = (uint32_t)bytes_to_num(t.nt.nti.nai.abtUid + t.nt.nti.nai.szUidLen - 4, 4);
-
-	// Mode -S : diagnostic nonce statique puis sortie.
-	if (static_nonce_test) {
-		detect_static_nonce(t, r, 0, 10);
-		nfc_close(r.pdi);
-		nfc_exit(context);
-		exit(EXIT_SUCCESS);
-	}
 
 	// Get Mifare Classic type from SAK
 	// see http://www.nxp.com/documents/application_note/AN10833.pdf Section 3.2
@@ -855,86 +842,10 @@ error:
 	exit(EXIT_FAILURE);
 }
 
-// -----------------------------------------------------------------------------
-// detect_static_nonce : collecte plusieurs nonces en clair (reponse a la commande
-// AUTH, avant chiffrement) et determine si la puce renvoie un nonce constant.
-// Aucune cle requise : le premier nonce tag est emis en clair par la carte.
-// Retour : 1 = nonce statique, 0 = nonce variable (standard), -1 = indetermine.
-// -----------------------------------------------------------------------------
-int detect_static_nonce(mftag t, mfreader r, uint8_t block, unsigned probes)
-{
-	uint8_t Auth[4] = { MC_AUTH_A, block, 0x00, 0x00 };
-	uint8_t Rx[MAX_FRAME_LEN];
-	uint32_t nonces[64];
-	unsigned collected = 0;
-	int res;
-	unsigned i;
-	bool all_same = true;
-
-	if (probes < 2) probes = 5;
-	if (probes > 64) probes = 64;
-
-	iso14443a_crc_append(Auth, 2);
-
-	printf("\n[static-nonce] Collecte de %u nonces en clair (bloc %u, AUTH A)...\n", probes, block);
-
-	for (i = 0; i < probes; i++) {
-		// Re-selection propre : une puce normale ne reemet un nt
-		// qu'apres une nouvelle anticollision.
-		mf_configure(r.pdi);
-		mf_anticollision(t, r);
-
-		// Controle total CRC + framing pour lire le nt brut
-		if (nfc_device_set_property_bool(r.pdi, NP_HANDLE_CRC, false) < 0) {
-			nfc_perror(r.pdi, "NP_HANDLE_CRC");
-			return -1;
-		}
-		if (nfc_device_set_property_bool(r.pdi, NP_EASY_FRAMING, false) < 0) {
-			nfc_perror(r.pdi, "NP_EASY_FRAMING");
-			return -1;
-		}
-
-		res = nfc_initiator_transceive_bytes(r.pdi, Auth, 4, Rx, sizeof(Rx), 0);
-
-		nfc_device_set_property_bool(r.pdi, NP_EASY_FRAMING, true);
-
-		if (res < 4) {
-			printf("[static-nonce] Probe %2u : pas de nonce (res=%d)\n", i, res);
-			continue;
-		}
-
-		nonces[collected] = (uint32_t)bytes_to_num(Rx, 4);
-		printf("[static-nonce] Probe %2u : nt = %08x\n", i, nonces[collected]);
-		collected++;
-	}
-
-	// Retablir la config normale
-	nfc_device_set_property_bool(r.pdi, NP_HANDLE_CRC, true);
-	nfc_device_set_property_bool(r.pdi, NP_HANDLE_PARITY, true);
-
-	if (collected < 2) {
-		printf("[static-nonce] Pas assez de nonces collectes, test non concluant.\n");
-		return -1;
-	}
-
-	for (i = 1; i < collected; i++) {
-		if (nonces[i] != nonces[0]) { all_same = false; break; }
-	}
-
-	if (all_same) {
-		printf("\n[static-nonce] >>> NONCE STATIQUE : nt constant = %08x sur %u tirages.\n", nonces[0], collected);
-		printf("[static-nonce]     Puce probablement clone / magic (ex. famille FM11RF08S).\n");
-		return 1;
-	}
-
-	printf("\n[static-nonce] >>> Nonce variable (pseudo-aleatoire) sur %u tirages : puce standard.\n", collected);
-	return 0;
-}
-
 void usage(FILE* stream, uint8_t errnr)
 {
 	// getopt(argc, argv, "hCZFP:T:O:k:f:I:")) != -1) {
-	fprintf(stream, "Usage: mfoc-hardnested [-h] [-C] [-F] [-S] [-k key] [-f file] ... [-P probnum] [-T tolerance] [-O output]\n");
+	fprintf(stream, "Usage: mfoc-hardnested [-h] [-C] [-F] [-k key] [-f file] ... [-P probnum] [-T tolerance] [-O output]\n");
 	fprintf(stream, "\n");
 	fprintf(stream, "  h       print this help and exit\n");
 	fprintf(stream, "  C       skip testing default keys\n");
@@ -946,7 +857,6 @@ void usage(FILE* stream, uint8_t errnr)
 	fprintf(stream, "  T       nonce tolerance half-range, instead of default of 20\n        (i.e., 40 for the total range, in both directions)\n");
 	fprintf(stream, "  O       file in which the card contents will be written\n");
 	fprintf(stream, "  I [0|1] force tag reader intrusive scan (value 0 to force disable intrusive scan or 1 to force enable it)\n");
-	fprintf(stream, "  S       static-nonce diagnostic: collect plain nonces, report if tag nonce is constant (clone/magic)\n");
 	fprintf(stream, "\n");
 	fprintf(stream, "Example: mfoc-hardnested -O mycard.mfd\n");
 	fprintf(stream, "Example: mfoc-hardnested -k ffffeeeedddd -O mycard.mfd\n");

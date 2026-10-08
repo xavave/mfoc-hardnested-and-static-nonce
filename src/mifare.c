@@ -49,7 +49,7 @@
 
 #include <string.h>
 
-#include <nfc/nfc.h>
+#include <nfc\nfc.h>
 
 /**
  * @brief Execute a MIFARE Classic command
